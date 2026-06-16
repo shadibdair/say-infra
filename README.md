@@ -1,8 +1,8 @@
-# Birds App — Sayari Infrastructure Take-Home (Module 1)
+# Birds App - Say Infrastructure (Module 1)
 
 ## Project overview
 
-This repository contains a Flask API, SQLite database, Dockerfile, and Helm chart for the Sayari Infrastructure technical challenge. The starter project had broken application logic, no container build, and a Helm chart that deployed nginx instead of the birds application. Module 1 fixes those issues and demonstrates end-to-end deployment: local Python, Docker, and Kubernetes (kind + Helm).
+This repository contains a Flask API, SQLite database, Dockerfile, and Helm chart for the Say Infrastructure technical challenge. The starter project had broken application logic, no container build, and a Helm chart that deployed nginx instead of the birds application. Module 1 fixes those issues and demonstrates end-to-end deployment: local Python, Docker, and Kubernetes (kind + Helm).
 
 ```
 .
@@ -149,14 +149,14 @@ docker rm -f birds-app
 
 **Application (`app.py`)**
 
-- Weather API URL bug fixed — state code is now substituted correctly in the weather.gov request
-- State code validation added — only 2-letter codes accepted; input normalized to uppercase
-- Safe Weather API error handling added — timeout, graceful failure, bird data returned if weather is unavailable
+- Weather API URL bug fixed - state code is now substituted correctly in the weather.gov request
+- State code validation added - only 2-letter codes accepted; input normalized to uppercase
+- Safe Weather API error handling added - timeout, graceful failure, bird data returned if weather is unavailable
 - `/health` endpoint added for Kubernetes probes
 
 **Container**
 
-- `Dockerfile` added — `python:3.12-slim`, installs `requirements.txt`, copies `app.py` and `birds.db`, Flask on `0.0.0.0:5000`
+- `Dockerfile` added - `python:3.12-slim`, installs `requirements.txt`, copies `app.py` and `birds.db`, Flask on `0.0.0.0:5000`
 
 **Helm chart (`helm/birds/`)**
 
@@ -168,14 +168,14 @@ docker rm -f birds-app
 
 ## Known limitations
 
-- **SQLite** is acceptable for this take-home/local demo, but not suitable for production scale (multi-replica writes, backups, HA)
+- **SQLite** is acceptable for this local demo, but not suitable for production scale (multi-replica writes, backups, HA)
 - **Flask dev server** (`flask run`) is acceptable for the exercise; production should use gunicorn/uwsgi behind a proper ingress
 - **weather.gov** is an external dependency; production would need retry logic, caching, circuit breaking, and monitoring
 - **birds.db** may contain pre-existing data inconsistencies (e.g. incorrect state names for some abbreviations)
 - Chart uses a local-only image tag (`birds-app:local`); production requires a container registry and CI/CD pipeline
 - Ingress is disabled; access is via `kubectl port-forward`
 
-## Module 2 — Production design
+## Module 2 - Production design
 
 The production-scale architecture and operational design is documented in [PRODUCTION_DESIGN.md](./PRODUCTION_DESIGN.md).
 

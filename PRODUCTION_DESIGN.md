@@ -1,10 +1,10 @@
-# Birds API — Production Architecture (Module 2)
+# Birds API - Production Architecture (Module 2)
 
 ## 1. Executive summary
 
 The Birds API is a stateless HTTP service that reads bird data from a database and enriches it with weather alerts from weather.gov. For production, I would run it on a managed Kubernetes platform (GKE, EKS, or AKS) behind an Ingress load balancer with TLS, deploy via GitOps (ArgoCD), replace SQLite with managed PostgreSQL, add caching and resilience around the external weather API, and instrument the stack with logs, metrics, traces, and SLO-based alerting.
 
-The design prioritizes **operational simplicity**, **clear failure boundaries**, and **graceful degradation** — the app should return bird data even when weather.gov is slow or unavailable. This matches the behavior already implemented in Module 1, extended with production-grade infrastructure around it.
+The design prioritizes **operational simplicity**, **clear failure boundaries**, and **graceful degradation** - the app should return bird data even when weather.gov is slow or unavailable. This matches the behavior already implemented in Module 1, extended with production-grade infrastructure around it.
 
 ---
 
@@ -63,9 +63,9 @@ User
 
 ### Design notes
 
-- **Stateless pods** — all persistent state lives in PostgreSQL and Redis; pods are horizontally scalable.
-- **Cache layer** — At small scale, an in-memory TTL cache may be enough. Redis becomes useful when multiple replicas need a shared cache.
-- **Managed services** — offload database operations, backups, and patching to the cloud provider.
+- **Stateless pods** - all persistent state lives in PostgreSQL and Redis; pods are horizontally scalable.
+- **Cache layer** - At small scale, an in-memory TTL cache may be enough. Redis becomes useful when multiple replicas need a shared cache.
+- **Managed services** - offload database operations, backups, and patching to the cloud provider.
 
 ---
 
@@ -82,7 +82,7 @@ push/PR → lint + unit tests → build image → Trivy scan → push to registr
 | **Test** | Run `pytest` (app logic, validation, mocked weather API), `helm lint`, `helm template` dry-run |
 | **Build** | `docker build` with versioned tag (`sha`, `semver`) |
 | **Scan** | Trivy (or Snyk) for OS and dependency CVEs; fail on critical |
-| **Push** | ECR / GCR / ACR — never deploy `birds-app:local` |
+| **Push** | ECR / GCR / ACR - never deploy `birds-app:local` |
 | **Deploy** | ArgoCD syncs Helm chart to target cluster/namespace |
 
 ### Environments
@@ -97,7 +97,7 @@ Each environment gets its own values file (`values-dev.yaml`, `values-staging.ya
 
 ### Rollback strategy
 
-- **Kubernetes:** `helm rollback birds <revision>` or ArgoCD "rollback to previous" — fast, preferred for bad deploys.
+- **Kubernetes:** `helm rollback birds <revision>` or ArgoCD "rollback to previous" - fast, preferred for bad deploys.
 - **Image pin:** every deploy tags the exact image digest in Helm values; rollbacks are deterministic.
 - **Database:** schema migrations run forward-only with reviewed rollback scripts for emergencies.
 
@@ -108,7 +108,7 @@ Each environment gets its own values file (`values-dev.yaml`, `values-staging.ya
 ### Deployment
 
 ```yaml
-# Illustrative — not applied in Module 1
+# Illustrative - not applied in Module 1
 replicas: 3   # minimum for HA; HPA scales beyond this
 
 resources:
@@ -125,9 +125,9 @@ resources:
 | **Replicas** | Start with 3; scale with HPA |
 | **Probes** | `readinessProbe` and `livenessProbe` on `/health` (already in Module 1) |
 | **HPA** | Start with CPU/memory targets (e.g. 70% CPU); min 3, max 20. Add request rate or other custom metrics through Prometheus Adapter/KEDA later if needed |
-| **PDB** | `minAvailable: 2` — ensures at least two pods during node drains/upgrades |
-| **Anti-affinity** | `podAntiAffinity` preferred across AZs — spreads replicas across failure domains |
-| **Namespaces** | `birds-dev`, `birds-staging`, `birds-prod` — isolate RBAC, secrets, and quotas |
+| **PDB** | `minAvailable: 2` - ensures at least two pods during node drains/upgrades |
+| **Anti-affinity** | `podAntiAffinity` preferred across AZs - spreads replicas across failure domains |
+| **Namespaces** | `birds-dev`, `birds-staging`, `birds-prod` - isolate RBAC, secrets, and quotas |
 
 **Probe design:** Readiness should indicate whether the pod can serve traffic. Liveness should only detect a stuck process and should not depend on external services like weather.gov.
 
@@ -155,10 +155,10 @@ Workers are tuned per CPU limit; for I/O-bound workloads (weather API calls), th
 
 ### Internal vs external
 
-- **Birds API** — external-facing via Ingress.
-- **PostgreSQL** — private subnet only; no public endpoint.
-- **Redis** — cluster-internal Service; not exposed externally.
-- **weather.gov** — egress via NAT gateway; consider allowlisting and monitoring outbound traffic.
+- **Birds API** - external-facing via Ingress.
+- **PostgreSQL** - private subnet only; no public endpoint.
+- **Redis** - cluster-internal Service; not exposed externally.
+- **weather.gov** - egress via NAT gateway; consider allowlisting and monitoring outbound traffic.
 
 ---
 
@@ -166,7 +166,7 @@ Workers are tuned per CPU limit; for I/O-bound workloads (weather API calls), th
 
 ### Why not SQLite in production
 
-SQLite is embedded in the container filesystem. It does not support concurrent writes across replicas, has no built-in HA, and data is lost if a pod is rescheduled without a persistent volume. For a multi-replica Deployment, each pod would have its own copy — inconsistent and fragile.
+SQLite is embedded in the container filesystem. It does not support concurrent writes across replicas, has no built-in HA, and data is lost if a pod is rescheduled without a persistent volume. For a multi-replica Deployment, each pod would have its own copy - inconsistent and fragile.
 
 ### Managed PostgreSQL
 
@@ -176,7 +176,7 @@ SQLite is embedded in the container filesystem. It does not support concurrent w
 | **Schema** | Alembic or Flyway migrations in CI/CD pipeline |
 | **Backups** | Automated daily snapshots; point-in-time recovery (PITR) enabled |
 | **Encryption** | At-rest (KMS) and in-transit (TLS to DB) |
-| **Pooling** | PgBouncer sidecar or RDS Proxy — avoid connection exhaustion under load |
+| **Pooling** | PgBouncer sidecar or RDS Proxy - avoid connection exhaustion under load |
 | **Read replicas** | Add when read traffic grows; bird data is read-heavy, weather is external |
 
 ### Migration from SQLite
@@ -262,7 +262,7 @@ This keeps the API available and fast even when weather.gov is degraded.
 | Latency (p95, cache miss) | < 2s | acceptable for external API call |
 | Error rate (5xx) | < 0.1% | |
 
-Weather.gov outages consume **error budget for the weather component only** — bird data availability SLO remains independent if graceful degradation works.
+Weather.gov outages consume **error budget for the weather component only** - bird data availability SLO remains independent if graceful degradation works.
 
 ---
 
@@ -286,7 +286,7 @@ Weather.gov outages consume **error budget for the weather component only** — 
 | Concern | Approach |
 |---------|----------|
 | **Multi-AZ** | Kubernetes nodes and RDS/Cloud SQL across 3 availability zones |
-| **Rolling deploys** | `maxUnavailable: 0`, `maxSurge: 1` — zero-downtime deploys |
+| **Rolling deploys** | `maxUnavailable: 0`, `maxSurge: 1` - zero-downtime deploys |
 | **Rollback** | Helm/ArgoCD rollback to previous revision (< 5 min) |
 | **DB backups** | Daily snapshots + PITR; restore tested quarterly |
 | **DR plan** | Document RTO/RPO (e.g. RPO 1h, RTO 4h); cross-region read replica for critical workloads |
@@ -300,9 +300,9 @@ Weather.gov outages consume **error budget for the weather component only** — 
 |----------|--------|
 | **Right-sizing** | Start small (100m CPU, 128Mi RAM); tune from Prometheus data |
 | **HPA** | Scale down during low traffic (nights/weekends if applicable) |
-| **Tagging** | Label all resources: `app=birds`, `env=prod`, `team=platform` — enable cost allocation |
+| **Tagging** | Label all resources: `app=birds`, `env=prod`, `team=platform` - enable cost allocation |
 | **Cost alerts** | Cloud billing alert at 80% and 100% of monthly budget |
-| **Cache** | In-memory TTL cache initially; shared Redis when replica count grows — reduces weather.gov load and latency |
+| **Cache** | In-memory TTL cache initially; shared Redis when replica count grows - reduces weather.gov load and latency |
 | **Managed services** | RDS/Cloud SQL costs more than self-hosted but saves engineering time; acceptable trade-off |
 | **Avoid over-provisioning** | PDB + HPA instead of statically running 20 pods "just in case" |
 
