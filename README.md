@@ -180,3 +180,37 @@ docker rm -f birds-app
 The production-scale architecture and operational design is documented in [PRODUCTION_DESIGN.md](./PRODUCTION_DESIGN.md).
 
 It covers Kubernetes production setup, CI/CD, managed database migration, observability, security, reliability, external dependency handling, and cost/FinOps considerations.
+
+## Cluster screenshots
+
+Screenshots from the local **kind** cluster (`kind-birds-dev`) showing the Birds app deployment.
+
+### Pods (all namespaces)
+
+![Pods in all namespaces](screenshots/pods-in-all-namespces.png)
+
+Shows all pods across the cluster. The important one is **`birds-5445fcd8dc-5vtvt`** in the `birds` namespace - this is the running Flask app container. The other pods (`coredns`, `kube-apiserver`, `etcd`, etc.) are standard Kubernetes system components that keep the cluster working.
+
+### Deployments
+
+![Deployments](screenshots/deployments.png)
+
+Shows **`birds`** Deployment in the `birds` namespace with **1/1 pods ready**. A Deployment keeps the desired number of app pods running and recreates them if they fail. The other deployments (`coredns`, `local-path-provisioner`) are cluster infrastructure, not part of the Birds app.
+
+### DaemonSets
+
+![DaemonSets](screenshots/demonsets.png)
+
+Shows cluster networking DaemonSets (`kindnet`, `kube-proxy`) in `kube-system`. These run one pod per node and are required for pod networking and Service routing. The Birds app is **not** a DaemonSet - it runs as a Deployment.
+
+### Services
+
+![Services](screenshots/services.png)
+
+Shows the **`birds`** Service in the `birds` namespace as **ClusterIP** on port **80 → 5000/TCP**. This gives the app a stable internal address and forwards traffic from Service port 80 to Flask on container port 5000. `kube-dns` and `kubernetes` are default cluster services.
+
+### Helm releases
+
+![Helm releases](screenshots/helm-releases.png)
+
+Shows Helm release **`birds`** in namespace `birds`, chart version **0.1.0**, app version **1.0.0**, revision **2**, status **Deployed**. This confirms the app was installed with Helm (`helm upgrade --install birds ./helm/birds`) and is active in the cluster.
